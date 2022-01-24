@@ -1,10 +1,7 @@
 ﻿using Azure.Storage.Queues;
 using MessageBrokerDemo.Models;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace MessageBrokerDemo.Controllers
@@ -21,7 +18,7 @@ namespace MessageBrokerDemo.Controllers
 
             QueueClient queueClient = new QueueClient(connection_string, queue_name);
             var textBytes = System.Text.Encoding.UTF8.GetBytes(order.ToString());
-            await queueClient.SendMessageAsync(System.Convert.ToBase64String(textBytes));
+            await queueClient.SendMessageAsync(Convert.ToBase64String(textBytes));
         }
     }
 }
