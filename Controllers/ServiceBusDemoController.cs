@@ -1,6 +1,7 @@
 ﻿using Azure.Messaging.ServiceBus;
-using MessageBrokerDemo.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 using System.Threading.Tasks;
 
 namespace MessageBrokerDemo.Controllers
@@ -9,31 +10,35 @@ namespace MessageBrokerDemo.Controllers
     [ApiController]
     public class ServiceBusDemoController : ControllerBase
     {
-        public ServiceBusDemoController()
-        {
+        private IConfiguration _configuration;
 
+        public ServiceBusDemoController(IConfiguration configuration)
+        {
+            _configuration = configuration;
         }
 
         [HttpPost("queue/message")]
-        public async Task PostMessageInQuiue([FromBody] Order order)
+        public async Task PostMessageInQuiue([FromBody] dynamic queueMessage)
         {
-            string connection_string = "Endpoint=sb://servicebus240122.servicebus.windows.net/;SharedAccessKeyName=send;SharedAccessKey=3bfxLGDA/w0VXNkOTMt//mk756sUmiplTd/em3ie/kM=;EntityPath=app_queue";
-            string queue_name = "app_queue";
-            ServiceBusClient serviceBusClient = new ServiceBusClient(connection_string);
-            ServiceBusSender serviceBusSender = serviceBusClient.CreateSender(queue_name);
-            ServiceBusMessage serviceBusMessage = new ServiceBusMessage(order.ToString());
+            var connectionString = _configuration.GetSection("ServiceBusQueue")["ConnectionString"];
+            var queueName = _configuration.GetSection("ServiceBusQueue")["QueueName"];
+
+            ServiceBusClient serviceBusClient = new(connectionString);
+            ServiceBusSender serviceBusSender = serviceBusClient.CreateSender(queueName);
+            ServiceBusMessage serviceBusMessage = new(JsonSerializer.Serialize(queueMessage));
 
             await serviceBusSender.SendMessageAsync(serviceBusMessage);
         }
 
         [HttpPost("topic/message")]
-        public async Task PostMessageInTopic([FromBody] Order order)
+        public async Task PostMessageInTopic([FromBody] dynamic queueMessage)
         {
-            string connection_string = "Endpoint=sb://servicebus240122.servicebus.windows.net/;SharedAccessKeyName=send;SharedAccessKey=PFjynsOrUOrEI943WnRo5IqScHQ6cbnCJbvkM6qSYTA=;EntityPath=app_topic";
-            string topic_name = "app_topic";
-            ServiceBusClient serviceBusClient = new ServiceBusClient(connection_string);
-            ServiceBusSender serviceBusSender = serviceBusClient.CreateSender(topic_name);
-            ServiceBusMessage serviceBusMessage = new ServiceBusMessage(order.ToString());
+            var connectionString = _configuration.GetSection("ServiceBusTopic")["ConnectionString"];
+            var topicName = _configuration.GetSection("ServiceBusTopic")["TopicName"];
+
+            ServiceBusClient serviceBusClient = new(connectionString);
+            ServiceBusSender serviceBusSender = serviceBusClient.CreateSender(topicName);
+            ServiceBusMessage serviceBusMessage = new(JsonSerializer.Serialize(queueMessage));
 
             await serviceBusSender.SendMessageAsync(serviceBusMessage);
         }
